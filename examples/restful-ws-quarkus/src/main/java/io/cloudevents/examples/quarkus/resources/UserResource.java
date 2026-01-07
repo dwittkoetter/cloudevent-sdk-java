@@ -1,12 +1,12 @@
 package io.cloudevents.examples.quarkus.resources;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.cloudevents.CloudEvent;
 import io.cloudevents.examples.quarkus.model.User;
 import io.cloudevents.jackson.JsonFormat;
 import io.cloudevents.jackson.PojoCloudEventDataMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import tools.jackson.databind.ObjectMapper;
 
 import javax.inject.Inject;
 import javax.ws.rs.*;

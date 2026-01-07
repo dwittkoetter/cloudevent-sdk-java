@@ -1,24 +1,21 @@
 package io.cloudevents.examples.quarkus.client;
 
-import java.net.URI;
-import java.util.UUID;
-
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import javax.ws.rs.core.MediaType;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import org.eclipse.microprofile.rest.client.inject.RestClient;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import io.cloudevents.CloudEvent;
 import io.cloudevents.CloudEventData;
 import io.cloudevents.core.builder.CloudEventBuilder;
 import io.cloudevents.core.data.PojoCloudEventData;
 import io.cloudevents.examples.quarkus.model.User;
 import io.quarkus.scheduler.Scheduled;
+import org.eclipse.microprofile.rest.client.inject.RestClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import tools.jackson.databind.ObjectMapper;
+
+import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
+import javax.ws.rs.core.MediaType;
+import java.net.URI;
+import java.util.UUID;
 
 @ApplicationScoped
 public class UserEventsGenerator {
@@ -31,7 +28,7 @@ public class UserEventsGenerator {
     @Inject
     @RestClient
     UserClient userClient;
-    
+
     long userCount=0;
 
     @Scheduled(every="2s")

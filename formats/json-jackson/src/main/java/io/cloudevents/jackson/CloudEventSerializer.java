@@ -17,17 +17,16 @@
 
 package io.cloudevents.jackson;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.SerializerProvider;
-import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import io.cloudevents.CloudEvent;
 import io.cloudevents.CloudEventData;
 import io.cloudevents.core.CloudEventUtils;
 import io.cloudevents.rw.CloudEventContextReader;
 import io.cloudevents.rw.CloudEventContextWriter;
 import io.cloudevents.rw.CloudEventRWException;
+import tools.jackson.core.JsonGenerator;
+import tools.jackson.databind.SerializationContext;
+import tools.jackson.databind.ser.std.StdSerializer;
 
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
 /**
@@ -47,21 +46,17 @@ class CloudEventSerializer extends StdSerializer<CloudEvent> {
     private static class JsonContextWriter implements CloudEventContextWriter {
 
         private final JsonGenerator gen;
-        private final SerializerProvider provider;
+        private final SerializationContext context;
 
-        public JsonContextWriter(JsonGenerator gen, SerializerProvider provider) {
+        public JsonContextWriter(JsonGenerator gen, SerializationContext context) {
             this.gen = gen;
-            this.provider = provider;
+            this.context = context;
         }
 
         @Override
         public CloudEventContextWriter withContextAttribute(String name, String value) throws CloudEventRWException {
-            try {
-                gen.writeStringField(name, value);
-                return this;
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+            gen.writeStringProperty(name, value);
+            return this;
         }
 
         @Override
@@ -80,66 +75,53 @@ class CloudEventSerializer extends StdSerializer<CloudEvent> {
         @Override
         public CloudEventContextWriter withContextAttribute(String name, Integer value) throws CloudEventRWException
         {
-            try {
-                gen.writeNumberField(name, value.intValue());
-                return this;
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+            gen.writeNumberProperty(name, value.intValue());
+            return this;
         }
 
         @Override
         public CloudEventContextWriter withContextAttribute(String name, Boolean value) throws CloudEventRWException {
-            try {
-                gen.writeBooleanField(name, value);
-                return this;
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+            gen.writeBooleanProperty(name, value);
+            return this;
         }
     }
 
     @Override
-    public void serialize(CloudEvent value, JsonGenerator gen, SerializerProvider provider) throws IOException {
+    public void serialize(CloudEvent value, JsonGenerator gen, SerializationContext context) {
         gen.writeStartObject();
-        gen.writeStringField("specversion", value.getSpecVersion().toString());
+        gen.writeStringProperty("specversion", value.getSpecVersion().toString());
 
         // Serialize attributes
-        try {
-            CloudEventContextReader contextReader = CloudEventUtils.toContextReader(value);
-            JsonContextWriter contextWriter = new JsonContextWriter(gen, provider);
-            contextReader.readContext(contextWriter);
-        } catch (RuntimeException e) {
-            throw (IOException) e.getCause();
-        }
+        CloudEventContextReader contextReader = CloudEventUtils.toContextReader(value);
+        JsonContextWriter contextWriter = new JsonContextWriter(gen, context);
+        contextReader.readContext(contextWriter);
 
         // Serialize data
         if (value.getData() != null) {
             CloudEventData data = value.getData();
             if (data instanceof JsonCloudEventData) {
-                gen.writeObjectField("data", ((JsonCloudEventData) data).getNode());
+                gen.writeName("data");
+                gen.writeTree(((JsonCloudEventData) data).getNode());
             } else {
                 byte[] dataBytes = data.toBytes();
                 String contentType = value.getDataContentType();
                 if (shouldSerializeBase64(contentType)) {
                     switch (value.getSpecVersion()) {
                         case V03:
-                            gen.writeStringField("datacontentencoding", "base64");
-                            gen.writeFieldName("data");
-                            gen.writeBinary(dataBytes);
+                            gen.writeStringProperty("datacontentencoding", "base64");
+                            gen.writeBinaryProperty("data", dataBytes);
                             break;
                         case V1:
-                            gen.writeFieldName("data_base64");
-                            gen.writeBinary(dataBytes);
+                            gen.writeBinaryProperty("data_base64", dataBytes);
                             break;
                     }
                 } else if (JsonFormat.dataIsJsonContentType(contentType)) {
                     // TODO really bad b/c it allocates stuff, is there another solution out there?
                     char[] dataAsString = new String(dataBytes, StandardCharsets.UTF_8).toCharArray();
-                    gen.writeFieldName("data");
+                    gen.writeName("data");
                     gen.writeRawValue(dataAsString, 0, dataAsString.length);
                 } else {
-                    gen.writeFieldName("data");
+                    gen.writeName("data");
                     gen.writeUTF8String(dataBytes, 0, dataBytes.length);
                 }
             }

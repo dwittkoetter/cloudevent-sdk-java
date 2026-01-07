@@ -17,14 +17,9 @@
 
 package io.cloudevents.jackson;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.exc.MismatchedInputException;
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import io.cloudevents.CloudEvent;
 import io.cloudevents.SpecVersion;
 import io.cloudevents.core.builder.CloudEventBuilder;
-import io.cloudevents.core.format.ContentType;
 import io.cloudevents.core.format.EventDeserializationException;
 import io.cloudevents.core.provider.EventFormatProvider;
 import io.cloudevents.rw.CloudEventRWException;
@@ -32,6 +27,10 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.exc.MismatchedInputException;
+import tools.jackson.databind.node.JsonNodeFactory;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -41,7 +40,7 @@ import java.nio.file.Paths;
 import java.util.Objects;
 import java.util.stream.Stream;
 
-import static io.cloudevents.core.format.ContentType.*;
+import static io.cloudevents.core.format.ContentType.JSON;
 import static io.cloudevents.core.test.Data.*;
 import static org.assertj.core.api.Assertions.*;
 

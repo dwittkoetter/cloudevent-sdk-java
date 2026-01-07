@@ -17,7 +17,6 @@
 
 package io.cloudevents.jackson;
 
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import io.cloudevents.CloudEvent;
 import io.cloudevents.core.builder.CloudEventBuilder;
 import io.cloudevents.core.mock.MyCloudEventData;
@@ -26,6 +25,7 @@ import io.cloudevents.core.test.Data;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import tools.jackson.databind.node.JsonNodeFactory;
 
 import java.util.stream.Stream;
 

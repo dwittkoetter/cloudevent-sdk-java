@@ -105,8 +105,8 @@
         </site>
 
         <snapshotRepository>
-            <id>ossrh</id>
-            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+            <id>logentis</id>
+            <url>https://artifacts.logentis.net/artifactory/snapshots</url>
         </snapshotRepository>
 
         <repository>

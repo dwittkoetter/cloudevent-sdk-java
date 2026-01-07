@@ -1,9 +1,10 @@
 package io.cloudevents.jackson;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.module.SimpleModule;
 import io.cloudevents.CloudEvent;
 import org.junit.jupiter.api.Test;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.module.SimpleModule;
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -55,15 +56,13 @@ public class CloudEventDeserializerTest {
     }
 
     private static ObjectMapper getObjectMapper(boolean disableDataContentTypeDefaulting) {
-        final ObjectMapper mapper = new ObjectMapper();
         final SimpleModule module = getCloudEventJacksonModule(
             JsonFormatOptions
                 .builder()
                 .disableDataContentTypeDefaulting(disableDataContentTypeDefaulting)
                 .build()
         );
-        mapper.registerModule(module);
-        return mapper;
+        return JsonMapper.builder().addModule(module).build();
     }
 
 }

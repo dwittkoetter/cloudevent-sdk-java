@@ -1,16 +1,15 @@
 package io.cloudevents.sql;
 
 import com.fasterxml.jackson.annotation.JsonValue;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import io.cloudevents.CloudEvent;
 import io.cloudevents.core.builder.CloudEventBuilder;
 import io.cloudevents.core.test.Data;
 import io.cloudevents.jackson.JsonFormat;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.dataformat.yaml.YAMLMapper;
 
-import java.io.IOException;
 import java.util.AbstractMap;
 import java.util.List;
 import java.util.Map;
@@ -94,8 +93,7 @@ public class TCKTestSuite {
     }
 
     public Stream<Map.Entry<String, TestCaseModel>> tckTestCases() {
-        ObjectMapper mapper = new YAMLMapper();
-        mapper.registerModule(JsonFormat.getCloudEventJacksonModule());
+        ObjectMapper mapper = YAMLMapper.builder().addModule(JsonFormat.getCloudEventJacksonModule()).build();
 
         // Files to load
         Stream<String> tckFiles = Stream.of(
@@ -120,13 +118,7 @@ public class TCKTestSuite {
         ).map(fileName -> "/tck/" + fileName + ".yaml");
 
         return tckFiles
-            .map(fileName -> {
-                try {
-                    return mapper.readValue(this.getClass().getResource(fileName), TestSuiteModel.class);
-                } catch (IOException e) {
-                    throw new RuntimeException(fileName, e);
-                }
-            })
+            .map(fileName -> mapper.readValue(this.getClass().getResourceAsStream(fileName), TestSuiteModel.class))
             .filter(Objects::nonNull)
             .flatMap(m -> m.tests.stream().map(tc -> new AbstractMap.SimpleImmutableEntry<>(m.name + ": " + tc.name, tc)));
     }

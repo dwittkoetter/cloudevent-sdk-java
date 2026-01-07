@@ -17,27 +17,26 @@
 
 package io.cloudevents.jackson;
 
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
-import com.fasterxml.jackson.databind.exc.MismatchedInputException;
-import com.fasterxml.jackson.databind.node.JsonNodeType;
-import com.fasterxml.jackson.databind.node.NullNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.cloudevents.CloudEvent;
 import io.cloudevents.CloudEventData;
 import io.cloudevents.SpecVersion;
 import io.cloudevents.core.builder.CloudEventBuilder;
 import io.cloudevents.core.data.BytesCloudEventData;
 import io.cloudevents.rw.*;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.JsonParser;
+import tools.jackson.databind.DeserializationContext;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.deser.std.StdDeserializer;
+import tools.jackson.databind.exc.MismatchedInputException;
+import tools.jackson.databind.node.JsonNodeType;
+import tools.jackson.databind.node.NullNode;
+import tools.jackson.databind.node.ObjectNode;
 
 import java.nio.charset.StandardCharsets;
-import java.io.IOException;
 
 /**
- * Jackson {@link com.fasterxml.jackson.databind.JsonDeserializer} for {@link CloudEvent}
+ * Jackson {@link tools.jackson.databind.deser.jackson.JsonNodeDeserializer} for {@link CloudEvent}
  */
 class CloudEventDeserializer extends StdDeserializer<CloudEvent> {
     private final boolean forceExtensionNameLowerCaseDeserialization;
@@ -132,7 +131,7 @@ class CloudEventDeserializer extends StdDeserializer<CloudEvent> {
                                 } else {
                                     JsonNode dataNode = node.remove("data");
                                     assertNodeType(dataNode, JsonNodeType.STRING, "data", "Because content type is not a json, only a string is accepted as data");
-                                    data = BytesCloudEventData.wrap(dataNode.asText().getBytes(StandardCharsets.UTF_8));
+                                    data = BytesCloudEventData.wrap(dataNode.asString().getBytes(StandardCharsets.UTF_8));
                                 }
                             }
                         }
@@ -150,13 +149,13 @@ class CloudEventDeserializer extends StdDeserializer<CloudEvent> {
                             } else {
                                 JsonNode dataNode = node.remove("data");
                                 assertNodeType(dataNode, JsonNodeType.STRING, "data", "Because content type is not a json, only a string is accepted as data");
-                                data = BytesCloudEventData.wrap(dataNode.asText().getBytes(StandardCharsets.UTF_8));
+                                data = BytesCloudEventData.wrap(dataNode.asString().getBytes(StandardCharsets.UTF_8));
                             }
                         }
                 }
 
                 // Now let's process the extensions
-                node.fields().forEachRemaining(entry -> {
+                node.properties().forEach(entry -> {
                     String extensionName = entry.getKey();
                     if (this.forceExtensionNameLowerCaseDeserialization) {
                         extensionName = extensionName.toLowerCase();
@@ -186,7 +185,7 @@ class CloudEventDeserializer extends StdDeserializer<CloudEvent> {
 
                             break;
                         case STRING:
-                            writer.withContextAttribute(extensionName, extensionValue.textValue());
+                            writer.withContextAttribute(extensionName, extensionValue.asString());
                             break;
                         default:
                             writer.withContextAttribute(extensionName, extensionValue.toString());
@@ -198,14 +197,12 @@ class CloudEventDeserializer extends StdDeserializer<CloudEvent> {
                     return writer.end(mapper.map(data));
                 }
                 return writer.end();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
             } catch (IllegalArgumentException e) {
                 throw new RuntimeException(MismatchedInputException.from(this.p, CloudEvent.class, e.getMessage()));
             }
         }
 
-        private String getStringNode(ObjectNode objNode, JsonParser p, String attributeName) throws JsonProcessingException {
+        private String getStringNode(ObjectNode objNode, JsonParser p, String attributeName) throws JacksonException {
             String val = getOptionalStringNode(objNode, p, attributeName);
             if (val == null) {
                 throw MismatchedInputException.from(p, CloudEvent.class, "Missing mandatory " + attributeName + " attribute");
@@ -213,16 +210,16 @@ class CloudEventDeserializer extends StdDeserializer<CloudEvent> {
             return val;
         }
 
-        private String getOptionalStringNode(ObjectNode objNode, JsonParser p, String attributeName) throws JsonProcessingException {
+        private String getOptionalStringNode(ObjectNode objNode, JsonParser p, String attributeName) throws JacksonException {
             JsonNode unparsedAttribute = objNode.remove(attributeName);
             if (unparsedAttribute == null || unparsedAttribute instanceof NullNode) {
                 return null;
             }
             assertNodeType(unparsedAttribute, JsonNodeType.STRING, attributeName, null);
-            return unparsedAttribute.asText();
+            return unparsedAttribute.asString();
         }
 
-        private void assertNodeType(JsonNode node, JsonNodeType type, String attributeName, String desc) throws JsonProcessingException {
+        private void assertNodeType(JsonNode node, JsonNodeType type, String attributeName, String desc) throws JacksonException {
             if (node.getNodeType() != type) {
                 throw MismatchedInputException.from(
                     p,
@@ -260,7 +257,7 @@ class CloudEventDeserializer extends StdDeserializer<CloudEvent> {
     }
 
     @Override
-    public CloudEvent deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JsonProcessingException {
+    public CloudEvent deserialize(JsonParser p, DeserializationContext ctxt) throws JacksonException {
         // In future we could eventually find a better solution avoiding this buffering step, but now this is the best option
         // Other sdk does the same in order to support all versions
         ObjectNode node = ctxt.readValue(p, ObjectNode.class);
@@ -269,10 +266,6 @@ class CloudEventDeserializer extends StdDeserializer<CloudEvent> {
             return new JsonMessage(p, node, this.forceExtensionNameLowerCaseDeserialization, this.forceIgnoreInvalidExtensionNameDeserialization, this.disableDataContentTypeDefaulting)
                 .read(CloudEventBuilder::fromSpecVersion);
         } catch (RuntimeException e) {
-            // Yeah this is bad but it's needed to support checked exceptions...
-            if (e.getCause() instanceof IOException) {
-                throw (IOException) e.getCause();
-            }
             throw MismatchedInputException.from(p, CloudEvent.class, e.getMessage());
         }
     }
