@@ -15,33 +15,29 @@
  */
 package io.cloudevents.spring.webflux;
 
-import java.net.URI;
-import java.util.UUID;
-
 import io.cloudevents.CloudEvent;
 import io.cloudevents.core.builder.CloudEventBuilder;
 import io.cloudevents.spring.http.CloudEventHttpUtils;
 import org.junit.jupiter.api.Test;
-import reactor.core.publisher.Mono;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.http.codec.CodecCustomizer;
+import org.springframework.boot.resttestclient.TestRestTemplate;
+import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureTestRestTemplate;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
-import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.boot.web.codec.CodecCustomizer;
-import org.springframework.boot.web.server.LocalServerPort;
+import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.RequestEntity;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.http.codec.CodecConfigurer;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
+import reactor.core.publisher.Mono;
+
+import java.net.URI;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -50,6 +46,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  */
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT, properties = "spring.main.web-application-type=REACTIVE")
+@AutoConfigureTestRestTemplate
 class WebFluxRestControllerTests {
 
 	@Autowired
@@ -74,9 +71,9 @@ class WebFluxRestControllerTests {
 
 		HttpHeaders headers = response.getHeaders();
 
-		assertThat(headers).containsKey("ce-id");
-		assertThat(headers).containsKey("ce-source");
-		assertThat(headers).containsKey("ce-type");
+        assertThat(headers.containsHeader("ce-id")).isTrue();
+        assertThat(headers.containsHeader("ce-source")).isTrue();
+        assertThat(headers.containsHeader("ce-type")).isTrue();
 
 		// assertThat(headers.getFirst("ce-id")).isNotEqualTo("12345");
 		assertThat(headers.getFirst("ce-type")).isEqualTo("io.spring.event.Foo");
@@ -103,9 +100,9 @@ class WebFluxRestControllerTests {
 
 		HttpHeaders headers = response.getHeaders();
 
-		assertThat(headers).containsKey("ce-id");
-		assertThat(headers).containsKey("ce-source");
-		assertThat(headers).containsKey("ce-type");
+        assertThat(headers.containsHeader("ce-id")).isTrue();
+        assertThat(headers.containsHeader("ce-source")).isTrue();
+        assertThat(headers.containsHeader("ce-type")).isTrue();
 
 		assertThat(headers.getFirst("ce-id")).isNotEqualTo("12345");
 		assertThat(headers.getFirst("ce-type")).isEqualTo("io.spring.event.Foo");
@@ -130,9 +127,9 @@ class WebFluxRestControllerTests {
 
 		HttpHeaders headers = response.getHeaders();
 
-		assertThat(headers).containsKey("ce-id");
-		assertThat(headers).containsKey("ce-source");
-		assertThat(headers).containsKey("ce-type");
+        assertThat(headers.containsHeader("ce-id")).isTrue();
+        assertThat(headers.containsHeader("ce-source")).isTrue();
+        assertThat(headers.containsHeader("ce-type")).isTrue();
 
 		assertThat(headers.getFirst("ce-id")).isNotEqualTo("12345");
 		assertThat(headers.getFirst("ce-type")).isEqualTo("io.spring.event.Foo");

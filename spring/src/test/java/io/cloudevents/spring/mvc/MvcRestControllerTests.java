@@ -15,33 +15,28 @@
  */
 package io.cloudevents.spring.mvc;
 
-import java.net.URI;
-import java.util.List;
-import java.util.UUID;
-
 import io.cloudevents.CloudEvent;
 import io.cloudevents.core.builder.CloudEventBuilder;
 import io.cloudevents.spring.http.CloudEventHttpUtils;
 import org.junit.jupiter.api.Test;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.resttestclient.TestRestTemplate;
+import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureTestRestTemplate;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
-import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.boot.web.server.LocalServerPort;
+import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.RequestEntity;
-import org.springframework.http.ResponseEntity;
-import org.springframework.http.converter.HttpMessageConverter;
+import org.springframework.http.*;
+import org.springframework.http.converter.HttpMessageConverters;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+
+import java.net.URI;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -50,6 +45,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  */
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
+@AutoConfigureTestRestTemplate
 class MvcRestControllerTests {
 
 	@Autowired
@@ -74,9 +70,9 @@ class MvcRestControllerTests {
 
 		HttpHeaders headers = response.getHeaders();
 
-		assertThat(headers).containsKey("ce-id");
-		assertThat(headers).containsKey("ce-source");
-		assertThat(headers).containsKey("ce-type");
+        assertThat(headers.containsHeader("ce-id")).isTrue();
+        assertThat(headers.containsHeader("ce-source")).isTrue();
+        assertThat(headers.containsHeader("ce-type")).isTrue();
 
 		// assertThat(headers.getFirst("ce-id")).isNotEqualTo("12345");
 		assertThat(headers.getFirst("ce-type")).isEqualTo("io.spring.event.Foo");
@@ -103,9 +99,9 @@ class MvcRestControllerTests {
 
 		HttpHeaders headers = response.getHeaders();
 
-		assertThat(headers).containsKey("ce-id");
-		assertThat(headers).containsKey("ce-source");
-		assertThat(headers).containsKey("ce-type");
+        assertThat(headers.containsHeader("ce-id")).isTrue();
+        assertThat(headers.containsHeader("ce-source")).isTrue();
+        assertThat(headers.containsHeader("ce-type")).isTrue();
 
 		// assertThat(headers.getFirst("ce-id")).isNotEqualTo("12345");
 		assertThat(headers.getFirst("ce-type")).isEqualTo("io.spring.event.Foo");
@@ -130,9 +126,9 @@ class MvcRestControllerTests {
 
 		HttpHeaders headers = response.getHeaders();
 
-		assertThat(headers).containsKey("ce-id");
-		assertThat(headers).containsKey("ce-source");
-		assertThat(headers).containsKey("ce-type");
+        assertThat(headers.containsHeader("ce-id")).isTrue();
+        assertThat(headers.containsHeader("ce-source")).isTrue();
+        assertThat(headers.containsHeader("ce-type")).isTrue();
 
 		assertThat(headers.getFirst("ce-id")).isNotEqualTo("12345");
 		assertThat(headers.getFirst("ce-type")).isEqualTo("io.spring.event.Foo");
@@ -169,10 +165,10 @@ class MvcRestControllerTests {
 		@Configuration
 		public static class CloudEventHandlerConfiguration implements WebMvcConfigurer {
 
-			@Override
-			public void configureMessageConverters(List<HttpMessageConverter<?>> converters) {
-				converters.add(0, new CloudEventHttpMessageConverter());
-			}
+            @Override
+            public void configureMessageConverters(HttpMessageConverters.ServerBuilder builder) {
+                builder.addCustomConverter(new CloudEventHttpMessageConverter());
+            }
 
 		}
 
